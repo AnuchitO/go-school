@@ -3,7 +3,6 @@ package main
 import (
 	"github.com/AnuchitO/school/todo"
 	"github.com/gin-gonic/gin"
-	_ "github.com/lib/pq"
 )
 
 func main() {
