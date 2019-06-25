@@ -14,7 +14,14 @@ type Todo struct {
 	Status string `json:"status"`
 }
 
-func GetHandler(c *gin.Context) {
+type TodoServicer interface {
+	FindAll() ([]Todo, error)
+}
+
+type TodoService struct {
+}
+
+func (ts *TodoService) FindAll() ([]Todo, error) {
 	conn := database.Connect()
 	rows := database.SelectAllTodo(conn)
 
@@ -23,10 +30,22 @@ func GetHandler(c *gin.Context) {
 		t := Todo{}
 		err := rows.Scan(&t.ID, &t.Title, &t.Status)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
+			return []Todo{}, err
 		}
 		todos = append(todos, t)
+	}
+
+	return todos, nil
+}
+
+// GetHandler ...
+func GetHandler(c *gin.Context) {
+	ts := &TodoService{}
+
+	todos, err := ts.FindAll()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
 	}
 
 	c.JSON(http.StatusOK, todos)
