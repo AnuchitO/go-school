@@ -5,7 +5,6 @@ import (
 	"strconv"
 
 	"github.com/AnuchitO/school/database"
-
 	"github.com/gin-gonic/gin"
 )
 
@@ -15,46 +14,22 @@ type Todo struct {
 	Status string `json:"status"`
 }
 
-type TodoServicer interface {
-	FindAll() ([]Todo, error)
-	FindById(id string) (Todo, error)
+type Handler struct {
+	ts TodoServicer
 }
 
-type TodoService struct {
-}
-
-func (ts *TodoService) FindAll() ([]Todo, error) {
-	conn := database.Connect()
-	rows := database.SelectAllTodo(conn)
-
-	todos := []Todo{}
-	for rows.Next() {
-		t := Todo{}
-		err := rows.Scan(&t.ID, &t.Title, &t.Status)
-		if err != nil {
-			return []Todo{}, err
-		}
-		todos = append(todos, t)
+func NewHandler() *Handler {
+	db := database.NewPostgres()
+	return &Handler{
+		ts: &TodoService{
+			db: db,
+		},
 	}
-
-	return todos, nil
-}
-func (ts *TodoService) FindByID(id int) (Todo, error) {
-	conn := database.Connect()
-	row := database.SelectByID(conn, id)
-	t := Todo{}
-	err := row.Scan(&t.ID, &t.Title, &t.Status)
-	if err != nil {
-		return Todo{}, err
-	}
-	return t, nil
 }
 
 // GetHandler ...
-func GetHandler(c *gin.Context) {
-	ts := &TodoService{}
-
-	todos, err := ts.FindAll()
+func (h *Handler) GetHandler(c *gin.Context) {
+	todos, err := h.ts.FindAll()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -64,8 +39,7 @@ func GetHandler(c *gin.Context) {
 }
 
 // GetByIdHandler ...
-func GetByIdHandler(c *gin.Context) {
-	ts := &TodoService{}
+func (h *Handler) GetByIdHandler(c *gin.Context) {
 	pID := c.Param("id")
 	id, err := strconv.Atoi(pID)
 	if err != nil {
@@ -73,7 +47,7 @@ func GetByIdHandler(c *gin.Context) {
 		return
 	}
 
-	todo, err := ts.FindByID(id)
+	todo, err := h.ts.FindByID(id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -82,6 +56,6 @@ func GetByIdHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, todo)
 }
 
-func CreateHandler(c *gin.Context) {}
-func UpdateHandler(c *gin.Context) {}
-func DeleteHandler(c *gin.Context) {}
+func (h *Handler) CreateHandler(c *gin.Context) {}
+func (h *Handler) UpdateHandler(c *gin.Context) {}
+func (h *Handler) DeleteHandler(c *gin.Context) {}

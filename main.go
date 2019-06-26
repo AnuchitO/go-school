@@ -8,10 +8,15 @@ import (
 func newRoute() *gin.Engine {
 	r := gin.Default()
 
-	r.GET("/api/todos", todo.GetHandler)
-	r.GET("/api/todos/:id", todo.GetByIdHandler)
-	r.POST("/api/todos", todo.UpdateHandler)
-	r.DELETE("/api/todos/:id", todo.DeleteHandler)
+	api := r.Group("/api")
+
+	td := todo.NewHandler()
+
+	api.GET("/todos", td.GetHandler)
+	api.GET("/todos/:id", td.GetByIdHandler)
+	api.POST("/todos", td.UpdateHandler)
+	api.DELETE("/todos/:id", td.DeleteHandler)
+
 	return r
 }
 

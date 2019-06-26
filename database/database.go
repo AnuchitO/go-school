@@ -2,24 +2,39 @@ package database
 
 import (
 	"database/sql"
+	"log"
 	"os"
 
 	_ "github.com/lib/pq"
 )
 
-func Connect() *sql.DB {
-	conn, _ := sql.Open("postgres", os.Getenv("DATABASE_URL"))
+type Postgres struct {
+	conn *sql.DB
+}
+
+func NewPostgres() *Postgres {
+	conn := connect()
+	return &Postgres{
+		conn: conn,
+	}
+}
+
+func connect() *sql.DB {
+	conn, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
+	if err != nil {
+		log.Fatal("con't connect to database ", err.Error())
+	}
 	return conn
 }
 
-func SelectAllTodo(conn *sql.DB) *sql.Rows {
-	stmt, _ := conn.Prepare("SELECT id, title, status FROM todos")
+func (p *Postgres) SelectAllTodo() *sql.Rows {
+	stmt, _ := p.conn.Prepare("SELECT id, title, status FROM todos")
 	rows, _ := stmt.Query()
 	return rows
 }
 
-func SelectByID(conn *sql.DB, id int) *sql.Row {
-	stmt, _ := conn.Prepare("SELECT id, title, status FROM todos WHERE id = $1")
+func (p *Postgres) SelectByID(id int) *sql.Row {
+	stmt, _ := p.conn.Prepare("SELECT id, title, status FROM todos WHERE id = $1")
 	row := stmt.QueryRow(id)
 	return row
 }
